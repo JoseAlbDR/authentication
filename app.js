@@ -30,7 +30,6 @@ dbConnect();
 const userSchema = mongoose.Schema({
   username: {
     type: String,
-    unique: true,
   },
   password: {
     type: String,
@@ -56,8 +55,8 @@ app
       console.log(user);
       if (!user) {
         user = new User({ username: username, password: password });
-        user.save();
-        res.send(`User ${username} created.`);
+        await user.save();
+        res.render("secrets");
       } else {
         throw new Error(`User ${username} already exist.`);
       }
@@ -79,12 +78,16 @@ app
       if (!user) {
         throw new Error("Wrong user or password.");
       } else {
-        res.send(`User: ${req.body.username} logged in.`);
+        res.render("secrets");
       }
     } catch (err) {
       console.log(err);
       res.send(err.message);
     }
   });
+
+app.route("/logout").get((req, res) => {
+  res.redirect("/");
+});
 
 app.listen("3000", () => console.log("Server started on port 3000."));
