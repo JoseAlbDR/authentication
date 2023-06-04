@@ -28,7 +28,7 @@ dbConnect();
 // DB schema, model
 
 const userSchema = mongoose.Schema({
-  user: {
+  username: {
     type: String,
     unique: true,
   },
@@ -52,22 +52,39 @@ app
   .post(async (req, res) => {
     try {
       const { username, password } = req.body;
-      let user = await User.findOne({ user: username });
+      let user = await User.findOne({ username: username });
       console.log(user);
       if (!user) {
-        user = new User({ user: username, password: password });
+        user = new User({ username: username, password: password });
         user.save();
         res.send(`User ${username} created.`);
       } else {
         throw new Error(`User ${username} already exist.`);
       }
     } catch (err) {
+      console.log(err);
       res.send(err.message);
     }
   });
 
-app.get("/login", (req, res) => {
-  res.render("login");
-});
+// Login
+app
+  .route("/login")
+  .get((req, res) => {
+    res.render("login");
+  })
+  .post(async (req, res) => {
+    try {
+      const user = await User.findOne(req.body);
+      if (!user) {
+        throw new Error("Wrong user or password.");
+      } else {
+        res.send(`User: ${req.body.username} logged in.`);
+      }
+    } catch (err) {
+      console.log(err);
+      res.send(err.message);
+    }
+  });
 
 app.listen("3000", () => console.log("Server started on port 3000."));
