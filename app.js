@@ -1,10 +1,12 @@
 //jshint esversion:6
+import "dotenv/config";
 import mongoose from "mongoose";
 import express from "express";
 import pkg from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import encrypt from "mongoose-encryption";
+
 const { urlencoded } = pkg;
 
 const app = express();
@@ -38,9 +40,9 @@ const userSchema = new mongoose.Schema({
 });
 
 // Encrypt
-const secret = "Thisisourlittlesecret.";
+
 userSchema.plugin(encrypt, {
-  secret: secret,
+  secret: process.env.SECRET,
   encryptedFields: ["password"],
 });
 
