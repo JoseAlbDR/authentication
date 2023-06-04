@@ -4,6 +4,7 @@ import express from "express";
 import pkg from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import encrypt from "mongoose-encryption";
 const { urlencoded } = pkg;
 
 const app = express();
@@ -27,13 +28,20 @@ dbConnect();
 
 // DB schema, model
 
-const userSchema = mongoose.Schema({
+const userSchema = new mongoose.Schema({
   username: {
     type: String,
   },
   password: {
     type: String,
   },
+});
+
+// Encrypt
+const secret = "Thisisourlittlesecret.";
+userSchema.plugin(encrypt, {
+  secret: secret,
+  encryptedFields: ["password"],
 });
 
 const User = mongoose.model("User", userSchema);
@@ -74,8 +82,10 @@ app
   })
   .post(async (req, res) => {
     try {
-      const user = await User.findOne(req.body);
-      if (!user) {
+      const user = await User.findOne({ username: req.body.username });
+      console.log(user);
+
+      if (user.password !== req.body.password) {
         throw new Error("Wrong user or password.");
       } else {
         res.render("secrets");
