@@ -5,7 +5,8 @@ import express from "express";
 import pkg from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
-import encrypt from "mongoose-encryption";
+// import encrypt from "mongoose-encryption";
+import md5 from "md5";
 
 const { urlencoded } = pkg;
 
@@ -41,10 +42,10 @@ const userSchema = new mongoose.Schema({
 
 // Encrypt
 
-userSchema.plugin(encrypt, {
-  secret: process.env.SECRET,
-  encryptedFields: ["password"],
-});
+// userSchema.plugin(encrypt, {
+//   secret: process.env.SECRET,
+//   encryptedFields: ["password"],
+// });
 
 const User = mongoose.model("User", userSchema);
 
@@ -64,7 +65,7 @@ app
       let user = await User.findOne({ username: username });
       console.log(user);
       if (!user) {
-        user = new User({ username: username, password: password });
+        user = new User({ username: username, password: md5(password) });
         await user.save();
         res.render("secrets");
       } else {
@@ -87,7 +88,7 @@ app
       const user = await User.findOne({ username: req.body.username });
       console.log(user);
 
-      if (user.password !== req.body.password) {
+      if (user.password !== md5(req.body.password)) {
         throw new Error("Wrong user or password.");
       } else {
         res.render("secrets");
