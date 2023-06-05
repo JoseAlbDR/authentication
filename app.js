@@ -5,8 +5,9 @@ import express from "express";
 import pkg from "body-parser";
 import path from "path";
 import { fileURLToPath } from "url";
+import bcrypt from "bcrypt";
 // import encrypt from "mongoose-encryption";
-import md5 from "md5";
+// import md5 from "md5";
 
 const { urlencoded } = pkg;
 
@@ -17,6 +18,8 @@ app.set("view engine", "ejs");
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+const saltRounds = 12;
 
 // DB connect
 const dbConnect = async function () {
@@ -63,9 +66,9 @@ app
     try {
       const { username, password } = req.body;
       let user = await User.findOne({ username: username });
-      console.log(user);
       if (!user) {
-        user = new User({ username: username, password: md5(password) });
+        const hash = await bcrypt.hash(password, saltRounds);
+        user = new User({ username: username, password: hash });
         await user.save();
         res.render("secrets");
       } else {
@@ -86,13 +89,19 @@ app
   .post(async (req, res) => {
     try {
       const user = await User.findOne({ username: req.body.username });
-      console.log(user);
+      if (!user) throw new Error("User does not exist.");
+      const match = await bcrypt.compare(req.body.password, user.password);
 
-      if (user.password !== md5(req.body.password)) {
-        throw new Error("Wrong user or password.");
-      } else {
+      if (match) {
         res.render("secrets");
+      } else {
+        throw new Error("Wrong password.");
       }
+      // if (user.password !== md5(req.body.password)) {
+      //   throw new Error("Wrong user or password.");
+      // } else {
+      //   res.render("secrets");
+      // }
     } catch (err) {
       console.log(err);
       res.send(err.message);
